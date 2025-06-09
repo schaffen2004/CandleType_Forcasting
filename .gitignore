@@ -9,3 +9,5 @@ checkpoints/
 data/
 
 __pycache__/
+
+wandb/

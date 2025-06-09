@@ -16,6 +16,7 @@ from dataset import provider
 from dotenv import load_dotenv
 from utils.log import Wandb
 from utils.visualization import display_args_table
+import wandb
 if __name__== '__main__':
     # set random
     config.set_seed(2021)
@@ -25,12 +26,19 @@ if __name__== '__main__':
     
     # get wandb id
     load_dotenv("config/.env")  # Tải biến từ .env
-    wandb_id = os.getenv("WANDB_ID")
+    wandb_id = os.getenv("WANDB_API_ID")
     
     # Visualize arguments info
     display_args_table(args)
     
     wandb = Wandb(args,wandb_id)
+    # os.system(f"wandb login --relogin {wandb_id}")
+    # wandb.init(
+    #     project="TimeMixer",
+    #     name="BTCUSD_1m_2MIL",
+    #     config=vars(args),
+    #     reinit=True
+    # )
     
     
     
