@@ -1,6 +1,6 @@
 import os
 import wandb
-from datetime import datetime
+
 
 class Wandb:
     def __init__(self, args, api_key):
@@ -13,14 +13,15 @@ class Wandb:
         """
         self.args = args
         self.api_key = api_key
-        self.project = args.model_id
+        self.project = args.model
+        self.session = args.session_id
         # Đăng nhập Wandb
         wandb.login()
 
         # Khởi tạo Wandb run
         wandb.init(
             project= self.project,
-            name= f"{self.args.model}_{self.args.data}_{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            name= self.session,
             config=vars(args),
             reinit=True
         )

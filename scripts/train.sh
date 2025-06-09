@@ -19,7 +19,6 @@ python -u run.py \
   --is_training 1 \
   --root_path  $root_data_path \
   --data_path data/XAUUSD_M5.csv \
-  --model_id TimeLLM \
   --model $model_name \
   --data XAUUSD \
  
