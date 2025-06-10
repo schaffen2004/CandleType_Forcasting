@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
 from sklearn.preprocessing import StandardScaler
+from utils.timefeatures import time_features
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -10,18 +11,20 @@ warnings.filterwarnings('ignore')
 
 class XAUUSD(Dataset):
     def __init__(self, root_path, flag='train', size=None,
-                 features='S', data_path='ETTh1.csv',
-                 target='OT', scale=True, timeenc=0, freq='h', seasonal_patterns=None):
+                 features='MS', data_path='ETTh1.csv',
+                 target='CandleType', scale=True, timeenc=0, freq='h'):
         # size [seq_len, label_len, pred_len]
         # info
+        
         if size == None:
-            self.seq_len = 24 * 4 * 4
-            self.label_len = 24 * 4
-            self.pred_len = 24 * 4
+            self.seq_len = 1024
+            self.label_len = 0
+            self.pred_len = 4
         else:
             self.seq_len = size[0]
             self.label_len = size[1]
             self.pred_len = size[2]
+        
         # init
         assert flag in ['train', 'test', 'val']
         type_map = {'train': 0, 'val': 1, 'test': 2}
@@ -47,8 +50,8 @@ class XAUUSD(Dataset):
         '''
         cols = list(df_raw.columns)
         cols.remove(self.target)
-        cols.remove('date')
-        df_raw = df_raw[['date'] + cols + [self.target]]
+        cols.remove('Time')
+        df_raw = df_raw[['Time'] + cols + [self.target]]
         num_train = int(len(df_raw) * 0.7)
         num_test = int(len(df_raw) * 0.2)
         num_vali = len(df_raw) - num_train - num_test
@@ -57,11 +60,8 @@ class XAUUSD(Dataset):
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
 
-        if self.features == 'M' or self.features == 'MS':
-            cols_data = df_raw.columns[1:]
-            df_data = df_raw[cols_data]
-        elif self.features == 'S':
-            df_data = df_raw[[self.target]]
+        cols_data = df_raw.columns[1:]
+        df_data = df_raw[cols_data]
 
         if self.scale:
             train_data = df_data[border1s[0]:border2s[0]]
@@ -70,16 +70,16 @@ class XAUUSD(Dataset):
         else:
             data = df_data.values
 
-        df_stamp = df_raw[['date']][border1:border2]
-        df_stamp['date'] = pd.to_datetime(df_stamp.date)
+        df_stamp = df_raw[['Time']][border1:border2]
+        df_stamp['Time'] = pd.to_datetime(df_stamp.Time)
         if self.timeenc == 0:
-            df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)
-            df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)
-            df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
-            df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
-            data_stamp = df_stamp.drop(['date'], 1).values
+            df_stamp['month'] = df_stamp.Time.apply(lambda row: row.month, 1)
+            df_stamp['day'] = df_stamp.Time.apply(lambda row: row.day, 1)
+            df_stamp['weekday'] = df_stamp.Time.apply(lambda row: row.weekday(), 1)
+            df_stamp['hour'] = df_stamp.Time.apply(lambda row: row.hour, 1)
+            data_stamp = df_stamp.drop(['Time'], 1).values
         elif self.timeenc == 1:
-            data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)
+            data_stamp = time_features(pd.to_datetime(df_stamp['Time'].values), freq=self.freq)
             data_stamp = data_stamp.transpose(1, 0)
 
         self.data_x = data[border1:border2]
@@ -93,7 +93,7 @@ class XAUUSD(Dataset):
         r_end = r_begin + self.label_len + self.pred_len
 
         seq_x = self.data_x[s_begin:s_end]
-        seq_y = self.data_y[r_begin:r_end]
+        seq_y = self.data_y[r_begin:r_end][:,-1].reshape(-1,1)
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
 

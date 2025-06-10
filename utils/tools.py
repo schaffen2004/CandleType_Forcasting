@@ -221,13 +221,3 @@ def test(args, accelerator, model, train_loader, vali_loader, criterion):
 
     model.train()
     return loss
-
-
-def load_content(args):
-    if 'ETT' in args.data:
-        file = 'ETT'
-    else:
-        file = args.data
-    with open('./dataset/prompt_bank/{0}.txt'.format(file), 'r') as f:
-        content = f.read()
-    return content

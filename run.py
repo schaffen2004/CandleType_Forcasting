@@ -3,8 +3,7 @@ from torch.optim import lr_scheduler
 from tqdm import tqdm
 import argparse
 import torch
-from utils.tools import del_files, EarlyStopping, adjust_learning_rate, vali, load_content
-from dataset import loader,provider
+from utils.tools import del_files, EarlyStopping, adjust_learning_rate
 import random
 import numpy as np
 import os
@@ -17,6 +16,7 @@ from utils.log import Wandb
 from utils.visualization import display_args_table
 import wandb
 from datetime import datetime
+from pipe.trainer import Trainer
 
 
 if __name__== '__main__':
@@ -33,11 +33,12 @@ if __name__== '__main__':
     # get wandb id
     load_dotenv("config/.env")  # Tải biến từ .env
     wandb_id = os.getenv("WANDB_API_ID")
-    wandb = Wandb(args,wandb_id)
+    #wandb = Wandb(args,wandb_id)
     
     # Training
     if args.is_training:
-        print("training")
+        trainer = Trainer(args)
+        trainer.train()
     else:
         pass
     

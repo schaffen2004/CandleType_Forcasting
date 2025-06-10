@@ -16,22 +16,15 @@ class Base(object):
         return None
 
     def _acquire_device(self):
-        if self.args.use_gpu:
-            import platform
-            if platform.system() == 'Darwin':
-                device = torch.device('mps')
-                print('Use MPS')
-                return device
-            os.environ["CUDA_VISIBLE_DEVICES"] = str(
-                self.args.gpu) if not self.args.use_multi_gpu else self.args.devices
-            device = torch.device('cuda:{}'.format(self.args.gpu))
-            if self.args.use_multi_gpu:
-                print('Use GPU: cuda{}'.format(self.args.device_ids))
-            else:
-                print('Use GPU: cuda:{}'.format(self.args.gpu))
+        # Kiểm tra xem có GPU có sẵn không
+        if torch.cuda.is_available():
+            # Sử dụng GPU đầu tiên nếu không có yêu cầu cụ thể
+            device = torch.device('cuda:0')  # Chọn GPU đầu tiên
+            os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # Chỉ định GPU 0
         else:
+            # Nếu không có GPU, sử dụng CPU
             device = torch.device('cpu')
-            print('Use CPU')
+            os.environ["CUDA_VISIBLE_DEVICES"] = ""  # Không sử dụng GPU
         return device
 
     def _get_data(self):
