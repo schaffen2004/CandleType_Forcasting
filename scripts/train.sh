@@ -1,4 +1,4 @@
-export CUDA_VISIBLE_DEVICES=3
+# export CUDA_VISIBLE_DEVICES=0
 
 model_name=TimeLLM
 
@@ -11,17 +11,15 @@ d_model=16
 d_ff=32
 train_epochs=100
 patience=10
-batch_size=128
-root_data_path="/home/schaffen/Workspace/Project/CandleType_Forcasting/"
+batch_size=4
+root_data_path="/home/trangndp/projects/trading_bot/"
 num_enc=22
-llama_layers=32
-d_model=32
-d_ff=128
+llama_layers=6
 
 python -u run.py \
   --is_training 1 \
   --root_path  $root_data_path \
-  --data_path data/XAUUSD_M5.csv \
+  --data_path dataset/M5/XAUUSD_M5.csv \
   --model $model_name \
   --data XAUUSD \
   --itr 1 \

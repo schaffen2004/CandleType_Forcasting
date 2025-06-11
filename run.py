@@ -33,12 +33,14 @@ if __name__== '__main__':
     # get wandb id
     load_dotenv("config/.env")  # Tải biến từ .env
     wandb_id = os.getenv("WANDB_API_ID")
-    #wandb = Wandb(args,wandb_id)
+    wandb = Wandb(args,wandb_id)
     
     # Training
     if args.is_training:
         trainer = Trainer(args)
         trainer.train()
+        torch.cuda.empty_cache()
+        
     else:
         pass
     

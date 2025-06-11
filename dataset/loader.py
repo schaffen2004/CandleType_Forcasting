@@ -42,9 +42,10 @@ class XAUUSD(Dataset):
 
     def __read_data__(self):
         self.scaler = StandardScaler()
-        df_raw = pd.read_csv(os.path.join(self.root_path,
+        df_get = pd.read_csv(os.path.join(self.root_path,
                                           self.data_path))
-
+        # Lấy 1/4 dữ liệu cuối
+        df_raw  = df_get.iloc[-len(df_get)//4:]
         '''
         df_raw.columns: ['date', ...(other features), target feature]
         '''
@@ -93,7 +94,7 @@ class XAUUSD(Dataset):
         r_end = r_begin + self.label_len + self.pred_len
 
         seq_x = self.data_x[s_begin:s_end]
-        seq_y = self.data_y[r_begin:r_end][:,-1].reshape(-1,1)
+        seq_y = self.data_y[r_begin:r_end][:,-1]
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
 

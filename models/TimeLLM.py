@@ -73,7 +73,7 @@ class Model(nn.Module):
         if configs.prompt_domain:
             self.description = configs.content
         else:
-            self.description = 'The Electricity Transformer Temperature (ETT) is a crucial indicator in the electric power long-term deployment.'
+            self.description = 'The dataset is designed for forecasting the type of the next candlestick with target variable is CandleType (binary: 0 or 1) in financial time series. The symbol of this dataset is XAUUSD, timeframe 5 minute. It includes 24 features: timestamp, price data (Open, High, Low, Close), volume, and technical indicators (e.g., ADX, ATR, RSI, MACD).'
 
         self.dropout = nn.Dropout(configs.dropout)
 
@@ -122,7 +122,7 @@ class Model(nn.Module):
             lags_values_str = str(lags[b].tolist())
             prompt_ = (
                 f"<|start_prompt|>Dataset description: {self.description}"
-                f"Task description: forecast the next {str(self.pred_len)} steps given the previous {str(self.seq_len)} steps information; "
+                f"Task description: forecast type of the next candle {str(self.pred_len)} steps given the previous {str(self.seq_len)} steps information; "
                 "Input statistics: "
                 f"min value {min_values_str}, "
                 f"max value {max_values_str}, "
@@ -136,6 +136,7 @@ class Model(nn.Module):
         x_enc = x_enc.reshape(B, N, T).permute(0, 2, 1).contiguous()
 
         prompt = self.tokenizer(prompt, return_tensors="pt", padding=True, truncation=True, max_length=2048).input_ids
+                
         prompt_embeddings = self.llm_model.get_input_embeddings()(prompt.to(x_enc.device))  # (batch, prompt_token, dim)
 
         source_embeddings = self.mapping_layer(self.word_embeddings.permute(1, 0)).permute(1, 0)

@@ -2,6 +2,8 @@ from tabulate import tabulate
 from colorama import init, Fore, Back, Style
 import argparse
 
+def dislay_result():
+    pass
 
 def display_args_table(args, accelerator=None):
     """

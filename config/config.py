@@ -16,7 +16,7 @@ def get_args():
     # basic config
     parser.add_argument('--is_training', type=int, required=True, default=1, help='status')
     parser.add_argument('--session_id', type=str, default='test', help='model id')
-    parser.add_argument('--model', type=str, required=True, default='Autoformer',
+    parser.add_argument('--model', type=str, required=True, default='TimeLLM',
                         help='model name, options: [Autoformer, DLinear]')
     parser.add_argument('--seed', type=int, default=2021, help='random seed')
 
@@ -24,7 +24,7 @@ def get_args():
     parser.add_argument('--data', type=str, required=True, default='ETTm1', help='dataset type')
     parser.add_argument('--root_path', type=str, default='./dataset', help='root path of the data file')
     parser.add_argument('--data_path', type=str, default='ETTh1.csv', help='data file')
-    parser.add_argument('--features', type=str, default='M',
+    parser.add_argument('--features', type=str, default='MS',
                         help='forecasting task, options:[M, S, MS]; '
                             'M:multivariate predict multivariate, S: univariate predict univariate, '
                             'MS:multivariate predict univariate')
@@ -37,6 +37,8 @@ def get_args():
     parser.add_argument('--checkpoints', type=str, default='./checkpoints/', help='location of model checkpoints')
 
     # forecasting task
+    parser.add_argument('--use_gpu', type=bool, default=True, help='use gpu')
+    parser.add_argument('--gpu', type=int, default=0, help='gpu')
     parser.add_argument('--seq_len', type=int, default=96, help='input sequence length')
     parser.add_argument('--label_len', type=int, default=0, help='start token length')
     parser.add_argument('--pred_len', type=int, default=4, help='prediction sequence length')
