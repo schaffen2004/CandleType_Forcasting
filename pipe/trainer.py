@@ -46,7 +46,7 @@ class Trainer(Base):
         vali_data, vali_loader = provider(self.args, 'val')
         test_data, test_loader = provider(self.args, 'test')
         
-        
+
         path = os.path.join(self.args.checkpoints,self.args.session_id)
         if not os.path.exists(path):
             os.makedirs(path)
@@ -91,11 +91,11 @@ class Trainer(Base):
              
                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
      
-                f_dim = 0
                 outputs = outputs[:, -self.args.pred_len:, -1]
                 batch_y = batch_y[:, -self.args.pred_len:].to(self.device)
                 loss = criterion(outputs, batch_y)
-                
+                print(outputs)
+                print(batch_y)
                 train_loss.append(loss.item())
                 
                 wandb.log({"train_loss/iteration": loss.item()})
