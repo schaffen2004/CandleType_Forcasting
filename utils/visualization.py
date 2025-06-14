@@ -2,8 +2,8 @@ from tabulate import tabulate
 from colorama import init, Fore, Back, Style
 import argparse
 
-def dislay_result():
-    pass
+def print_eval( train_loss, val_loss, test_loss, round_digits):
+    print(f"Train Loss: {train_loss:.{round_digits}f} Val Loss: {val_loss:.{round_digits}f} Test Loss: {test_loss:.{round_digits}f}")
 
 def display_args_table(args, accelerator=None):
     """

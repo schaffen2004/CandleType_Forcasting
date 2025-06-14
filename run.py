@@ -25,7 +25,7 @@ if __name__== '__main__':
 
     # get config
     args = config.get_args()
-    args.session_id = f"{args.model}_{args.data}_{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    args.session_id = f"{args.model}_{args.data}_{datetime.now().strftime('%Y-%m-%d')}"
     
     # Visualize arguments info
     display_args_table(args)

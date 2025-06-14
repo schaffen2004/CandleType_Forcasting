@@ -11,8 +11,8 @@ import numpy as np
 from pipe.base import Base
 from dataset.provider import provider
 from utils.tools import EarlyStopping,adjust_learning_rate
-
-
+from torchmetrics import Precision, Recall, F1Score, Accuracy
+from utils.visualization import print_eval
 warnings.filterwarnings('ignore')
 
 
@@ -23,7 +23,7 @@ class Trainer(Base):
     def _build_model(self):
         model = self.model_dict[self.args.model].Model(self.args).float()
              
-        model = nn.DataParallel(model, device_ids=[0,4,5,6])
+        model = nn.DataParallel(model, device_ids=[0,1])
         
         return model
 
@@ -72,6 +72,12 @@ class Trainer(Base):
             self.model.train()
             epoch_time = time.time()
             
+            # Khởi tạo metrics trên GPU
+            precision_metric = Precision(task="binary", threshold=0.5).to(self.device)
+            recall_metric = Recall(task="binary", threshold=0.5).to(self.device)
+            f1_metric = F1Score(task="binary", threshold=0.5).to(self.device)
+            accuracy_metric = Accuracy(task="binary", threshold=0.5).to(self.device)
+            
             for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(tqdm(train_loader)):
                 wandb.log({"Epoch": epoch + 1})
                 
@@ -92,10 +98,15 @@ class Trainer(Base):
                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
      
                 outputs = outputs[:, -self.args.pred_len:, -1]
-                batch_y = batch_y[:, -self.args.pred_len:].to(self.device)
                 loss = criterion(outputs, batch_y)
-                print(outputs)
-                print(batch_y)
+
+                
+                # Cập nhật metrics
+                precision_metric.update(outputs, batch_y.int())
+                recall_metric.update(outputs, batch_y.int())
+                f1_metric.update(outputs, batch_y.int())
+                accuracy_metric.update(outputs, batch_y.int())
+                
                 train_loss.append(loss.item())
                 
                 wandb.log({"train_loss/iteration": loss.item()})
@@ -105,20 +116,40 @@ class Trainer(Base):
                 model_optim.step()
                 
                 adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
-                scheduler.step()      
+                scheduler.step()
                        
 
             print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)
-            vali_loss = self.val(vali_data, vali_loader, criterion)
-            test_loss = self.val(test_data, test_loader, criterion)
+            precision = precision_metric.compute().item()
+            recall = recall_metric.compute().item()
+            f1 = f1_metric.compute().item()
+            accuracy = accuracy_metric.compute().item()
+
+
+            # In kết quả
+            print(f"Precision: {precision:.4f}")
+            print(f"Recall: {recall:.4f}")
+            print(f"F1-score: {f1:.4f}")
+            print(f"Accuracy: {accuracy:.4f}")
+            print(f"Average Loss: {train_loss:.4f}")
+            
+            val = self.val(vali_data, vali_loader, criterion)
+            test = self.val(test_data, test_loader, criterion)
+            
 
             
-            wandb.log({'train_loss': train_loss, 'vali_loss': vali_loss, "test_loss": test_loss})
-            
+            wandb.log({'train_loss': train_loss, 'vali_loss': val['loss'], "test_loss": test['loss']})
+            wandb.log({'train_acc': accuracy, 'vali_acc': val['acc'], "test_acc": test['acc']})
+            # wandb.log({'train_precision': precision, 'vali_precision': val['pre'], "test_precision": test['pre']})
+            # wandb.log({'train_recall': recall, 'vali_recall': val['recall'], "test_recall": test['recall']})
+            # wandb.log({'train_F1': f1, 'vali_F1': val['f1'], "test_F1": test['f1']})
             print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
-                epoch + 1, train_steps, train_loss, vali_loss,test_loss))
-            early_stopping(vali_loss, self.model, path)
+                epoch + 1, train_steps, train_loss, val['loss'],test['loss']))
+            
+            early_stopping(val['loss'], self.model, path)
+            
+            
             if early_stopping.early_stop:
                 print("Early stopping")
                 break
@@ -131,7 +162,13 @@ class Trainer(Base):
         
     def val(self, val_data, val_loader, criterion):
         total_loss = []
+        # Khởi tạo metrics trên GPU
+        precision_metric = Precision(task="binary", threshold=0.5).to(self.device)
+        recall_metric = Recall(task="binary", threshold=0.5).to(self.device)
+        f1_metric = F1Score(task="binary", threshold=0.5).to(self.device)
+        accuracy_metric = Accuracy(task="binary", threshold=0.5).to(self.device)
         self.model.eval()
+        
         with torch.no_grad():
             for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(tqdm(val_loader)):
                 batch_x = batch_x.float().to(self.device)
@@ -146,18 +183,39 @@ class Trainer(Base):
 
                 # encoder - decoder
                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-                f_dim = -1
+                outputs = outputs[:, -self.args.pred_len:, -1]
+                
 
-                pred = outputs.detach()
-                true = batch_y.detach()
+                precision_metric.update(outputs, batch_y.int())  # true cần là int cho torchmetrics
+                recall_metric.update(outputs, batch_y.int())
+                f1_metric.update(outputs, batch_y.int())
+                accuracy_metric.update(outputs, batch_y.int())
 
 
-                loss = criterion(pred, true)
+                loss = criterion(outputs, batch_y)
                 total_loss.append(loss.item())
 
         total_loss = np.average(total_loss)
+        precision = precision_metric.compute().item()
+        recall = recall_metric.compute().item()
+        f1 = f1_metric.compute().item()
+        accuracy = accuracy_metric.compute().item()
+
+
+        # In kết quả
+        print(f"Precision: {precision:.4f}")
+        print(f"Recall: {recall:.4f}")
+        print(f"F1-score: {f1:.4f}")
+        print(f"Accuracy: {accuracy:.4f}")
+        print(f"Average Loss: {total_loss:.4f}")
         self.model.train()
-        return total_loss
+        return {
+            'loss':total_loss,
+            'acc':accuracy,
+            'pre':precision,
+            'recall':recall,
+            'f1':f1
+        }
     
     def test(self,test_data, test_loader, criterion):
         total_loss = []        

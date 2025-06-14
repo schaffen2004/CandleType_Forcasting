@@ -38,7 +38,7 @@ def get_args():
 
     # forecasting task
     parser.add_argument('--use_gpu', type=bool, default=True, help='use gpu')
-    parser.add_argument('--gpu', type=int, default=0, help='gpu')
+    parser.add_argument('--gpu', type=int, default=2, help='gpu')
     parser.add_argument('--seq_len', type=int, default=96, help='input sequence length')
     parser.add_argument('--label_len', type=int, default=0, help='start token length')
     parser.add_argument('--pred_len', type=int, default=4, help='prediction sequence length')
